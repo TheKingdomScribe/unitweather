@@ -1,6 +1,6 @@
 # UnitWeather (unitweather)
 
-A Quasar Framework app
+A basic weather app.
 
 ## Install the dependencies
 ```bash
