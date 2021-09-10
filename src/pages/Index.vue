@@ -1,11 +1,12 @@
 <template>
-  <q-page class="flex column">
+  <q-page class="flex column" :class="bgClass">
     <div class=" col q-pt-lg q-px-md">
       <q-input 
         color="white" 
         v-model="location" 
         label="Search a location" 
         label-color="white"
+        @keyup.enter="getWeatherBySearch"
         filled
         clearable
       >
@@ -19,21 +20,21 @@
       </q-input>
     </div>
 
-    <template v-if="weatherData==={}">
+    <template v-if="hasData">
       <div class="col text-white text-center">
-        <div class="text-h4 text-weight-light">
-          Niagara
+        <div class="text-h3 text-weight-light">
+          {{ weatherData.data.name }}
         </div>
-        <div class="text-h6 text-weight-light">
-          Cloudy
+        <div class="text-h4 text-weight-light">
+          {{ weatherData.data.weather[0].main }}
         </div>
         <div class="text-h1 text-weight-thin q-my-lg relative-position">
-          <span>15</span>
+          <span>{{ Math.round(weatherData.data.main.temp) }}</span>
           <span class="text-h2 relative-position degree">&deg;</span>
         </div>
       </div>
       <div class="col text-center">
-        <img src="https://www.fillmurray.com/100/100" alt="img">
+        <img :src="`http://openweathermap.org/img/wn/${ weatherData.data.weather[0].icon }@2x.png`">
       </div>
     </template>
     <!-- <div class="col boat"> -->
@@ -46,7 +47,7 @@
         </div>
         <q-btn class="col" flat @click="getLocation" >
           <q-icon left size="3em" name="pin_drop" />
-          <div>CHeck current location</div>
+          <div>Check current location</div>
         </q-btn>
       </div>
     </template>
@@ -54,7 +55,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, reactive } from 'vue';
+import { defineComponent, ref, reactive, computed } from 'vue';
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
@@ -62,38 +63,76 @@ export default defineComponent({
   name: 'PageIndex',
 
   setup() {
-    
     let location = ref('')
+    let weatherData = reactive({data: {}})
+    let hasData = ref(weatherData.data.base ? true : false)
     const $q = useQuasar()
-    const weatherData = reactive({})
     const latitude = ref(null)
     const longitude = ref(null)
     const apiKey = ref('1998301f5ecfbb123dc2a6901e52ce68')
     const apiUrl = ref('api.openweathermap.org/data/2.5/weather')
+    const bgClass = computed(() => {
+      if(hasData.value){
+        if(weatherData.data.weather[0].icon.endsWith('n')){
+          return 'bg-night'
+        }
+        else{
+          return 'bg-day'
+        }
+      }
+    });
+
 
     function getLocation(){
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          latitude.value = position.coords.latitude
-          longitude.value = position.coords.longitude
-          getWeather()
-        }
-      )
+      $q.loading.show()
+
+      if($q.platform.is.electron){
+        api.get("https://freegeoip.app/json/").then(response => {
+          latitude.value = response.data.latitude
+          longitude.value = response.data.longitude
+          getWeatherByCoords()
+        })
+      }
+      else{
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            latitude.value = position.coords.latitude
+            longitude.value = position.coords.longitude
+            getWeatherByCoords()
+          }
+        )
+        
+      }
+
     }
 
-    function getWeather(){
-      api.get(`${ apiUrl.value }?lat=${ latitude.value }&lon=${ longitude.value }&appid=${ apiKey.value }`)
-      .then(response => { 
-          weatherData.value = response.data})
-          .then(response => { 
-            console.log('response: ', response)})           
+    function getWeatherByCoords(){
+      $q.loading.show()
+      api.get(`${ apiUrl.value }?lat=${ latitude.value }&lon=${ longitude.value }&appid=${ apiKey.value }&units=metric`)
+      .then(response => {  
+          weatherData.data = response.data
+          hasData.value = true
+          $q.loading.hide()
+      })         
+    }
+
+    function getWeatherBySearch(){
+      $q.loading.show()
+      api.get(`${ apiUrl.value }?q=${ location.value }&appid=${ apiKey.value }&units=metric`)
+      .then(response => {  
+          weatherData.data = response.data
+          $q.loading.hide()
+      })
     }
 
     return {
       location, 
       weatherData,
+      hasData,
+      bgClass,
 
-      getLocation
+      getLocation,
+      getWeatherBySearch
 
     }
   }
@@ -103,7 +142,12 @@ export default defineComponent({
 
 <style lang="scss">
   .q-page {
-    background: linear-gradient(to bottom, #36d1dc, #5b86e5); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    background: linear-gradient(to bottom, #36d1dc, #5b86e5);
+    &.bg-night {
+      background: linear-gradient(to bottom, #141e30, #243b55);
+    }&.bg-day {
+      background: linear-gradient(to bottom, #36d1dc, #5b86e5);
+    }
   }
   .degree {
     top:-35px
