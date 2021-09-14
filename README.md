@@ -1,6 +1,6 @@
 # UnitWeather (unitweather)
 
-A basic weather app.
+A basic weather app. Must have a valid OpenWeather API key to run.
 
 ## Install the dependencies
 ```bash
