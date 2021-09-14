@@ -7,7 +7,7 @@
         label="Search a location" 
         label-color="white"
         @keyup.enter="getWeatherBySearch"
-        filled
+        standout
         clearable
       >
         <template v-slot:prepend>
@@ -22,7 +22,7 @@
 
     <template v-if="hasData">
       <div class="col text-white text-center">
-        <div class="text-h3 text-weight-light">
+        <div class=" q-pt-md text-h3 text-weight-light">
           {{ weatherData.data.name }}
         </div>
         <div class="text-h4 text-weight-light">
@@ -32,10 +32,15 @@
           <span>{{ Math.round(weatherData.data.main.temp) }}</span>
           <span class="text-h2 relative-position degree">&deg;</span>
         </div>
+        <div class="col text-center">
+          <img :src="`http://openweathermap.org/img/wn/${ weatherData.data.weather[0].icon }@2x.png`">
+        </div>
+        <div class="col text-center">
+          <img v-if="bgClass==='bg-night'" class="silh night" :src="`gondolier-29216_640.png`">
+          <img v-else class="silh day" :src="`fisherman-3654878_640.png`">
+        </div>
       </div>
-      <div class="col text-center">
-        <img :src="`http://openweathermap.org/img/wn/${ weatherData.data.weather[0].icon }@2x.png`">
-      </div>
+      
     </template>
     <!-- <div class="col boat"> -->
     <!-- </div> -->
@@ -69,7 +74,7 @@ export default defineComponent({
     const $q = useQuasar()
     const latitude = ref(null)
     const longitude = ref(null)
-    const apiKey = ref('[API KEY HERE]')
+    const apiKey = ref('1998301f5ecfbb123dc2a6901e52ce68')
     const apiUrl = ref('api.openweathermap.org/data/2.5/weather')
     const bgClass = computed(() => {
       if(hasData.value){
@@ -121,6 +126,7 @@ export default defineComponent({
       api.get(`${ apiUrl.value }?q=${ location.value }&appid=${ apiKey.value }&units=metric`)
       .then(response => {  
           weatherData.data = response.data
+          hasData.value = true
           $q.loading.hide()
       })
     }
@@ -150,6 +156,16 @@ export default defineComponent({
     }
   }
   .degree {
-    top:-35px
+    top: -35px
+  }
+  .silh {
+    &.day {
+      width: 90%;
+      opacity: 75%;
+    }
+    &.night {
+      width: 100%;
+      opacity: 100%;
+    }
   }
 </style>
