@@ -69,7 +69,7 @@ export default defineComponent({
     const $q = useQuasar()
     const latitude = ref(null)
     const longitude = ref(null)
-    const apiKey = ref('1998301f5ecfbb123dc2a6901e52ce68')
+    const apiKey = ref('[API KEY HERE]')
     const apiUrl = ref('api.openweathermap.org/data/2.5/weather')
     const bgClass = computed(() => {
       if(hasData.value){
